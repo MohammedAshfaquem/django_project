@@ -1,6 +1,0 @@
-<h2>Are you sure you want to delete "{{ note.title }}"?</h2>
-<form method="post">
-  {% csrf_token %}
-  <button type="submit">Yes, delete</button>
-  <a href="{% url 'home' %}">Cancel</a>
-</form>
