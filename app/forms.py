@@ -1,5 +1,5 @@
 from django import forms
-from .models import User
+from .models import User,Note
 
 class UserRegisterForm(forms.ModelForm):
     class Meta:
@@ -8,4 +8,9 @@ class UserRegisterForm(forms.ModelForm):
         widgets = {
             'password': forms.PasswordInput(),
         }
+        
+class NoteForm(forms.ModelForm):
+    class Meta:
+        model = Note
+        fields = ['title', 'content']
 

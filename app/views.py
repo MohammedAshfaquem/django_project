@@ -1,8 +1,8 @@
-from django.shortcuts import render, redirect,get_object_or_404
-from django.contrib import messages
-from .forms import UserRegisterForm
-from .models import User,Note
+from django.shortcuts import render, redirect, get_object_or_404
+from .forms import UserRegisterForm, NoteForm
+from .models import User, Note
 import hashlib
+
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -14,44 +14,73 @@ def register(request):
             user = form.save(commit=False)
             user.password = hash_password(user.password)
             user.save()
-            messages.success(request, 'User registered successfully!')
-            return redirect('login')
+            return redirect('user_login')
     else:
         form = UserRegisterForm()
     return render(request, 'register.html', {'form': form})
 
 
-def login(request):
+ 
+def user_login(request):
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        hashed_pass = hash_password(password)
-
+        email = request.POST['email']
+        password = hash_password(request.POST['password'])
         try:
-            current_user = User.objects.get(email=email)
+            user = User.objects.get(email=email)
+            if user.password == password:
+                request.session['user_id'] = user.id
+                return redirect('note_list')
         except User.DoesNotExist:
-            messages.error(request, 'Invalid email')
-            return redirect('login')
-
-        if current_user.password == hashed_pass:
-            request.session['user_id'] = current_user.id
-            return redirect('home')
-        else:
-            messages.error(request, 'Invalid password')
-            return redirect('login')
-
+            pass
+        return redirect('user_login')
     return render(request, 'login.html')
 
 
-def home(request):
-    user_id = request.session.get('user_id')
-    if not user_id:
-        return redirect('login')
 
-    current_user = User.objects.get(id=user_id)
-    return render(request, 'home.html', {'user': current_user})
+def user_logout(request):
+    request.session.flush()
+    return redirect('user_login')
 
+# Create Note
+def create_note(request):
+    user_id = request.session['user_id']
+    current_user = get_object_or_404(User,id=user_id)
 
+    if request.method == 'POST':
+        form = NoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.user = current_user
+            note.save()
+            return redirect('note_list')
+    else:
+        form = NoteForm()
+    return render(request, 'note_form.html', {'form': form})
 
+# Read Notes
+def note_list(request):
+    user_id = request.session['user_id']
+    current_user = get_object_or_404(User, id=user_id)
+    notes = Note.objects.filter(user=current_user)
+    return render(request, 'note_list.html', {'notes': notes, 'user': current_user})
 
+# Update Note
+def update_note(request, pk):
+    user_id = request.session['user_id']
+    current_user = get_object_or_404(User, id=user_id)
+    note = get_object_or_404(Note, pk=pk, user=current_user)
+    form = NoteForm(request.POST or None, instance=note)
+    if form.is_valid():
+        form.save()
+        return redirect('note_list')
+    return render(request, 'note_form.html', {'form': form})
 
+# Delete Note
+def delete_note(request, pk):
+    user_id = request.session['user_id']
+    current_user = get_object_or_404(User, id=user_id)
+    note = get_object_or_404(Note, pk=pk, user=current_user)
+    if request.method == 'POST':
+        note.delete()
+        return redirect('note_list')
+    return render(request, 'confirm_delete.html', {'note': note})

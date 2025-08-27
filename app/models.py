@@ -9,9 +9,7 @@ class User(models.Model):
 
     def __str__(self):
         return self.name
-
-    
-    
+   
 class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100,default='untitled')
@@ -20,5 +18,6 @@ class Note(models.Model):
 
     def __str__(self):
         return self.title
-   
+    
+              
 # Create your models here.

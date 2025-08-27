@@ -1,11 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Home</title>
+    <title>Your Notes</title>
 </head>
 <body>
-    <h2>Welcome, {{ user.name }}!</h2>
-    <p>Your email: {{ user.email }}</p>
-    <p>Your age: {{ user.age }}</p>
+    <h2>Welcome, {{ request.user.name }}!</h2>
+    <p>Email: {{ request.user.email }}</p>
+
+    <h3>Your Notes</h3>
+    <a href="{% url 'create_note' %}">+ Add New Note</a>
+    <ul>
+        {% for note in notes %}
+            <li>
+                <strong>{{ note.title }}</strong><br>
+                {{ note.content }}<br>
+                <small>Created: {{ note.created_at }}</small><br>
+                <a href="{% url 'update_note' note.pk %}">Edit</a> |
+                <a href="{% url 'delete_note' note.pk %}">Delete</a>
+            </li>
+        {% empty %}
+            <li>No notes yet. <a href="{% url 'create_note' %}">Add your first note</a>.</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
